@@ -121,8 +121,8 @@ CartoDB.prototype.tile_data = function(x, y, zoom , callback) {
       the_geom = 'ST_SimplifyPreserveTopology("'+geom_column+'",0.1) as the_geom'      
     }
     
-    var columns = [the_geom].concat(opts.columns).join(',');
-    var sql = "select " + columns +" from " + opts.table + " WHERE the_geom && ST_SetSRID(ST_MakeBox2D(";
+    var sql = opts.query;
+    sql += " WHERE " + opts.table + ".the_geom && ST_SetSRID(ST_MakeBox2D(";
     sql += "ST_Point(" + bbox[0].lng() + "," + bbox[0].lat() +"),";
     sql += "ST_Point(" + bbox[1].lng() + "," + bbox[1].lat() +")), 4326)";
     this.sql(sql, callback);

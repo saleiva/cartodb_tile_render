@@ -62,13 +62,12 @@
     <script type="text/javascript">
 
         var map;
-        var valladolid = new google.maps.LatLng(41.701504, -4.8300523);
-        var valladolid = new google.maps.LatLng(40.7137, -74.004);
+        var center = new google.maps.LatLng(40.396764,-4.196777);
 
         function initialize() {
             var mapOptions = {
-                zoom: 13,
-                center: valladolid,
+                zoom: 6,
+                center: center,
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                 styles:[
                     {
@@ -104,14 +103,13 @@
             map = new google.maps.Map(document.getElementById('map_canvas'),
                     mapOptions);
 
-            var cartodb = new CartoDB({
-                user: 'jatorre',
-                table: 'ny_districts',
-                columns: ['num_stops_normalized'],
-                where: '',
-                debug: false,
-                css: "{ $c: Math.min(255, 255*$num_stops_normalized/15.0).toFixed(0); polygon-fill: rgba($c, 32, 128,0.7); line-color: rgba(82, 202, 231,0.1); }"
-            });
+                var cartodb = new CartoDB({
+                    user: 'vizzuality',
+                    table: 'esp_adm',
+                    query: 'SELECT esp_adm.the_geom, esp_adm.the_geom_webmercator, elecciones2008.upo_codigo_color FROM elecciones2008 INNER JOIN esp_adm ON (elecciones2008.upo_nombre = esp_adm.name_2)',              
+                    debug: true,
+                    css: "{ polygon-fill: rgba(134, 32, 128,0.7); line-color: rgba(82, 202, 231,0.1); }"
+                });
 
             document.getElementById('update_css').onclick = function() {
                 console.log(document.getElementById('css_text').value)
@@ -121,67 +119,67 @@
             map.overlayMapTypes.insertAt(0, cartodb.layer);
             var projection = new MercatorProjection();
             var myGoogleVectors = [];
-            google.maps.event.addListener(map, 'mousemove', function (event) {
-                // get tile
-                var coord = projection.latLngToTile(event.latLng,map.zoom);
+            // google.maps.event.addListener(map, 'mousemove', function (event) {
+            //     // get tile
+            //     var coord = projection.latLngToTile(event.latLng,map.zoom);
 
-                // get saved tile id from cartodb layer
-                var tile_id = coord.x + '_' + coord.y + '_' + map.zoom;
+            //     // get saved tile id from cartodb layer
+            //     var tile_id = coord.x + '_' + coord.y + '_' + map.zoom;
 
-                // get saved tile data from cartodb.layer
-                var tile = cartodb.layer.tiles[tile_id];
+            //     // get saved tile data from cartodb.layer
+            //     var tile = cartodb.layer.tiles[tile_id];
 
-                //Get current tile coordinates
-                var numTiles = 1 << map.zoom;
-                var pixel_offset = new google.maps.Point(Math.floor(event.point.x * numTiles % 256), Math.floor(event.point.y * numTiles % 256));
+            //     //Get current tile coordinates
+            //     var numTiles = 1 << map.zoom;
+            //     var pixel_offset = new google.maps.Point(Math.floor(event.point.x * numTiles % 256), Math.floor(event.point.y * numTiles % 256));
 
-                // get hit context
-                var hit_ctx = tile.hit_ctx;
+            //     // get hit context
+            //     var hit_ctx = tile.hit_ctx;
 
-                // get RGB values from context at current pixel position
-                var c = hit_ctx.getImageData(pixel_offset.x, pixel_offset.y, 1, 1).data;
+            //     // get RGB values from context at current pixel position
+            //     var c = hit_ctx.getImageData(pixel_offset.x, pixel_offset.y, 1, 1).data;
 
-                // get primitive array index from rgb
-                var primitive_idx = RGB2Int(c[0],c[1],c[2]);
-                //console.log(tile_id + ' ' + primitive_idx);
+            //     // get primitive array index from rgb
+            //     var primitive_idx = RGB2Int(c[0],c[1],c[2]);
+            //     //console.log(tile_id + ' ' + primitive_idx);
 
-                if (tile.primitives && tile.primitives[primitive_idx]){
-                    var geom = JSON.stringify(tile.primitives[primitive_idx].geometry);
-                    var text =    "<b>tile:</b> " + coord + '<br>';
-                    text = text + "<b>pixel:</b> " + pixel_offset + '<br>';
-                    text = text + "<b>primitive_idx: </b>" + primitive_idx + '<br>';
-                    //text = text + "<b>geom:</b> " + geom + '<br>';
-                    document.getElementById('mouse_feedback').innerHTML = text;
+            //     if (tile.primitives && tile.primitives[primitive_idx]){
+            //         var geom = JSON.stringify(tile.primitives[primitive_idx].geometry);
+            //         var text =    "<b>tile:</b> " + coord + '<br>';
+            //         text = text + "<b>pixel:</b> " + pixel_offset + '<br>';
+            //         text = text + "<b>primitive_idx: </b>" + primitive_idx + '<br>';
+            //         //text = text + "<b>geom:</b> " + geom + '<br>';
+            //         document.getElementById('mouse_feedback').innerHTML = text;
 
 
-                    opts = {
-                        "strokeColor": "#FF7800",
-                        "strokeOpacity": 0.8,
-                        "strokeWeight": 3,
-                        "fillColor": "#FF7800",
-                        "fillOpacity": 0.6
-                    };
+            //         opts = {
+            //             "strokeColor": "#FF7800",
+            //             "strokeOpacity": 0.8,
+            //             "strokeWeight": 3,
+            //             "fillColor": "#FF7800",
+            //             "fillOpacity": 0.6
+            //         };
 
-                    if (myGoogleVectors.length > 0){
+            //         if (myGoogleVectors.length > 0){
 
-                        myGoogleVectors.forEach(function(gv){
-                            gv.setMap(null);
-                        });
+            //             myGoogleVectors.forEach(function(gv){
+            //                 gv.setMap(null);
+            //             });
 
-                        myGoogleVectors.remove(0,myGoogleVectors.length-1);
-                    }
+            //             myGoogleVectors.remove(0,myGoogleVectors.length-1);
+            //         }
 
-                    var myGoogleVector = new GeoJSON(tile.primitives[primitive_idx].geometry, opts);
+            //         var myGoogleVector = new GeoJSON(tile.primitives[primitive_idx].geometry, opts);
 
-                    if (myGoogleVector.error){
-                        // Handle the error.
-                    }else{
-                        myGoogleVector.setMap(map);
-                        myGoogleVectors.push(myGoogleVector);
-                    }
-                    // render the geometry to canvas here...
-                }
-            });
+            //         if (myGoogleVector.error){
+            //             // Handle the error.
+            //         }else{
+            //             myGoogleVector.setMap(map);
+            //             myGoogleVectors.push(myGoogleVector);
+            //         }
+            //         // render the geometry to canvas here...
+            //     }
+            // });
 
             function map_latlon(latlng, x, y, zoom) {
                 latlng = new google.maps.LatLng(latlng[1], latlng[0]);
